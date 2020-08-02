@@ -19,6 +19,8 @@ using System.Reactive.Linq;
 using Avalonia.Threading;
 using Avalonia.Input;
 using Avalonia.Media.Immutable;
+using ColourWheel.Colour;
+
 
 namespace ColourWheel.Controls
 {

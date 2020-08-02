@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 using Avalonia.Media;
 using Avalonia.Media.Immutable;
 
-namespace ColourWheel.Controls
+namespace ColourWheel.Colour
 {
     [StructLayout(LayoutKind.Explicit)]
     public readonly struct RGBPixel

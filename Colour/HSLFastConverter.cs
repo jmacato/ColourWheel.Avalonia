@@ -1,6 +1,6 @@
 using System;
 
-namespace ColourWheel.Controls
+namespace ColourWheel.Colour
 {
     public static class HSLFastConverter
     {

@@ -1,4 +1,4 @@
-namespace ColourWheel.Controls
+namespace ColourWheel.Colour
 {
     public readonly ref struct HSLPixel
     {
