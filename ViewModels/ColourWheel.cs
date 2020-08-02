@@ -27,15 +27,18 @@ namespace ColourWheel.Controls
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private int XYtoIndex(int width, int x, int y) => x + (y * width);
 
-        private const int rowBatch = 48;
+        private const int rowBatch = 64;
         private readonly IPen SelectorBorderPen = new ImmutablePen(new ImmutableSolidColorBrush(Avalonia.Media.Colors.Black));
 
+        private ArrayPool<RGBPixel> SharedPoolMem = ArrayPool<RGBPixel>.Create((int)(1E7), 10);
+        private Size GetCurrentSize => ConstraintSize(Bounds.Size);
+        private RGBPixel pickerColor = RGBPixel.Transparent;
+        private Vector2 pickerVector;
+
+#if DEBUG
         private Stopwatch stopwatch = new Stopwatch();
         private Stopwatch stopwatch2 = new Stopwatch();
-
-        private ArrayPool<RGBPixel> SharedPoolMem = ArrayPool<RGBPixel>.Create((int)(1E7), 10);
-
-        private Size GetCurrentSize => ConstraintSize(Bounds.Size);
+#endif
 
         private static readonly DirectProperty<ColourWheel, WriteableBitmap> ColorWheelBitmapProperty =
             AvaloniaProperty.RegisterDirect<ColourWheel, WriteableBitmap>(
@@ -81,10 +84,10 @@ namespace ColourWheel.Controls
                 return;
             }
 
-            CheckPoint(e);
+            CheckAndSetPicker(e);
         }
 
-        private void CheckPoint(PointerEventArgs e)
+        private void CheckAndSetPicker(PointerEventArgs e)
         {
             var curPoint = e.GetCurrentPoint(this);
 
@@ -106,27 +109,19 @@ namespace ColourWheel.Controls
             {
                 var dx = radius * Math.Cos(theta);
                 var dy = radius * Math.Sin(theta);
-                selectedVector = new Vector2((float)dx, (float)dy) + centerVector;
+                pickerVector = new Vector2((float)dx, (float)dy) + centerVector;
             }
             else
             {
-                selectedVector = curPointVector;
+                pickerVector = curPointVector;
             }
-
 
             var hue = (theta + PI) / TWO_PI;
 
-            selectedColor = new HSLPixel(hue, 1f, 0.5f).ToRGBA();
-
+            pickerColor = new HSLPixel(hue, 1f, 0.5f).ToRGBA();
 
             InvalidateVisual();
-
-
-
         }
-
-        RGBPixel selectedColor = RGBPixel.Transparent;
-        Vector2 selectedVector;
 
         protected override void OnPointerReleased(Avalonia.Input.PointerReleasedEventArgs e)
         {
@@ -137,7 +132,7 @@ namespace ColourWheel.Controls
         protected override void OnPointerPressed(Avalonia.Input.PointerPressedEventArgs e)
         {
             _isDragging = true;
-            CheckPoint(e);
+            CheckAndSetPicker(e);
         }
 
         private Size ConstraintSize(Size finalSize)
@@ -194,7 +189,7 @@ namespace ColourWheel.Controls
                             continue;
                         }
 
-                        byte a = 255;
+                        byte a = byte.MaxValue;
 
                         var theta = (float)Math.Atan2(dxy.Y, dxy.X);
 
@@ -213,10 +208,8 @@ namespace ColourWheel.Controls
             });
 
             var totalbytes = totalPixels * 4;
-
             var pixSize = new PixelSize(width, height);
             var recSize = new Rect(new Size(width, height));
-
 
             var tmpBitmap = new WriteableBitmap(pixSize, new Avalonia.Vector(96, 96), PixelFormat.Bgra8888);
 
@@ -245,17 +238,14 @@ namespace ColourWheel.Controls
             Console.WriteLine(elapsed.TotalMilliseconds);
             stopwatch2.Reset();
 #endif
-
         }
 
 
         public override void Render(DrawingContext context)
         {
-
 #if DEBUG
             stopwatch.Start();
 #endif
-
             if (ColorWheelBitmap is null) return;
 
             var rect = new Rect(GetCurrentSize);
@@ -265,8 +255,8 @@ namespace ColourWheel.Controls
 
             if (_isDragging)
             {
-                var brush = selectedColor.ToImmutableBrush();
-                var circle = new EllipseGeometry(new Rect(selectedVector.X - 20, selectedVector.Y - 20, 40, 40));
+                var brush = pickerColor.ToImmutableBrush();
+                var circle = new EllipseGeometry(new Rect(pickerVector.X - 20, pickerVector.Y - 20, 40, 40));
                 context.DrawGeometry(brush, SelectorBorderPen, circle);
             }
 
@@ -277,7 +267,6 @@ namespace ColourWheel.Controls
             Console.WriteLine(elapsed.TotalMilliseconds);
             stopwatch.Reset();
 #endif
-
         }
     }
 }
