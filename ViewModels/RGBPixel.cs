@@ -1,4 +1,7 @@
+using System;
 using System.Runtime.InteropServices;
+using Avalonia.Media;
+using Avalonia.Media.Immutable;
 
 namespace ColourWheel.Controls
 {
@@ -34,5 +37,7 @@ namespace ColourWheel.Controls
             this.G = g;
             this.B = b;
         }
+
+        internal ImmutableSolidColorBrush ToImmutableBrush() => new ImmutableSolidColorBrush(Color.FromArgb(A, R, G, B));
     }
 }
